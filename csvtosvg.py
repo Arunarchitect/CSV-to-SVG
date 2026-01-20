@@ -1,20 +1,20 @@
-import csv
 from collections import defaultdict
 import os
-from xml.sax.saxutils import escape  # <-- to escape special XML characters
+import csv
+from xml.sax.saxutils import escape
 
 # ===============================
 # USER CONTROLS
 # ===============================
 
-CSV_FILE = "FF.csv"          # Input CSV
-SVG_FILE = "area_schedule.svg"  # Output SVG
+CSV_FILE = "FF.csv"
+SVG_FILE = "area_schedule.svg"
 
 PAGE_WIDTH = 900
 PAGE_HEIGHT = 1400
 
 START_X_NAME = 100
-START_X_AREA = 750
+START_X_AREA = 750  # Right-aligned area column position
 START_Y = 160
 
 ROW_GAP = 42
@@ -22,8 +22,8 @@ ROW_GAP = 42
 FONT_FAMILY_REGULAR = "Roboto"
 FONT_FAMILY_LIGHT = "Roboto Light"
 
-FONT_SIZE_GROUP = 24   # For group headings and single spaces
-FONT_SIZE_ITEM = 20    # For individual items
+FONT_SIZE_GROUP = 24
+FONT_SIZE_ITEM = 20
 
 COLOR_GROUP = "#000000"
 COLOR_ITEM = "#222222"
@@ -40,38 +40,45 @@ SQM_TO_SQFT = 10.7639
 # SVG HEADER
 # ===============================
 
-svg_header = f"""<?xml version="1.0" encoding="UTF-8"?>
+svg_header = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg"
      width="{PAGE_WIDTH}" height="{PAGE_HEIGHT}"
      viewBox="0 0 {PAGE_WIDTH} {PAGE_HEIGHT}">
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&amp;display=swap');
   .title {{
-    font-family: '{FONT_FAMILY_REGULAR}', sans-serif;
+    font-family: "{FONT_FAMILY_REGULAR}", sans-serif;
     font-size: {FONT_SIZE_GROUP + 8}px;
     font-weight: bold;
     fill: #000;
   }}
   .group {{
-    font-family: '{FONT_FAMILY_REGULAR}', sans-serif;
+    font-family: "{FONT_FAMILY_REGULAR}", sans-serif;
     font-size: {FONT_SIZE_GROUP}px;
     font-weight: bold;
     fill: {COLOR_GROUP};
   }}
   .item {{
-    font-family: '{FONT_FAMILY_LIGHT}', sans-serif;
+    font-family: "{FONT_FAMILY_LIGHT}", sans-serif;
     font-size: {FONT_SIZE_ITEM}px;
     fill: {COLOR_ITEM};
   }}
   .area {{
-    font-family: '{FONT_FAMILY_LIGHT}', sans-serif;
+    font-family: "{FONT_FAMILY_LIGHT}", sans-serif;
     font-size: {FONT_SIZE_ITEM}px;
     fill: {COLOR_AREA};
     text-anchor: end;
   }}
+  .group-area {{
+    font-family: "{FONT_FAMILY_REGULAR}", sans-serif;
+    font-size: {FONT_SIZE_GROUP}px;
+    font-weight: bold;
+    fill: {COLOR_GROUP};
+    text-anchor: end;
+  }}
 </style>
-"""
+'''
 
 svg_footer = "</svg>"
 
@@ -137,23 +144,36 @@ y = START_Y
 
 for group_name, items in sorted_groups:
 
-    # Single-space entry
+    # Single-space entry (main space without sub-items)
     if len(items) == 1:
         item = items[0]
         area_m2 = round(item['area'], ROUND_AREA)
         area_ft2 = round(item['area'] * SQM_TO_SQFT, ROUND_AREA)
         area_text = f"{area_m2}{AREA_UNIT_M2} / {area_ft2}{AREA_UNIT_FT2}"
-
+        
+        # Name on the left
         elements.append(
-            f'<text x="{START_X_NAME}" y="{y}" class="group">{escape(item["name"])}  ({area_text})</text>'
+            f'<text x="{START_X_NAME}" y="{y}" class="group">{escape(item["name"])}</text>'
+        )
+        # Area on the right (right-aligned)
+        elements.append(
+            f'<text x="{START_X_AREA}" y="{y}" class="group-area">{area_text}</text>'
         )
         y += ROW_GAP
         continue  # skip the normal group loop
 
-    # Multi-space group heading
+    # Multi-space group heading with total area
     group_total = round(sum(item["area"] for item in items), ROUND_AREA)
+    total_ft2 = round(group_total * SQM_TO_SQFT, ROUND_AREA)
+    total_text = f"{group_total}{AREA_UNIT_M2} / {total_ft2}{AREA_UNIT_FT2}"
+    
+    # Group name on the left
     elements.append(
-        f'<text x="{START_X_NAME}" y="{y}" class="group">{escape(group_name)}  (Total: {group_total}{AREA_UNIT_M2} / {round(group_total*SQM_TO_SQFT,2)}{AREA_UNIT_FT2})</text>'
+        f'<text x="{START_X_NAME}" y="{y}" class="group">{escape(group_name)}</text>'
+    )
+    # Total area on the right (right-aligned)
+    elements.append(
+        f'<text x="{START_X_AREA}" y="{y}" class="group-area">(Total: {total_text})</text>'
     )
     y += ROW_GAP
 
@@ -165,9 +185,11 @@ for group_name, items in sorted_groups:
         area_ft2 = round(item['area'] * SQM_TO_SQFT, ROUND_AREA)
         area_text = f"{area_m2}{AREA_UNIT_M2} / {area_ft2}{AREA_UNIT_FT2}"
 
+        # Item name on the left (indented)
         elements.append(
             f'<text x="{START_X_NAME + 20}" y="{y}" class="item">{escape(item["name"])}</text>'
         )
+        # Item area on the right (right-aligned)
         elements.append(
             f'<text x="{START_X_AREA}" y="{y}" class="area">{area_text}</text>'
         )
