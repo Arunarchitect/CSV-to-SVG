@@ -188,7 +188,7 @@ grand_total_ft2 = round(grand_total_area * SQM_TO_SQFT, ROUND_AREA)
 grand_total_text = f"{grand_total_m2}{AREA_UNIT_M2} / {grand_total_ft2}{AREA_UNIT_FT2}"
 
 elements.append(
-    f'<text x="{PAGE_WIDTH/2}" y="80" class="main-title" text-anchor="middle">TOTAL AREA</text>'
+    f'<text x="{PAGE_WIDTH/2}" y="80" class="main-title" text-anchor="middle">TOTAL CARPET AREA</text>'
 )
 elements.append(
     f'<text x="{PAGE_WIDTH/2}" y="130" class="main-title" text-anchor="middle">{grand_total_text}</text>'
