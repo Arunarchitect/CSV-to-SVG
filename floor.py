@@ -97,8 +97,8 @@ def process_csv_file(csv_file_path):
         reader = csv.DictReader(csvfile)
         
         for row in reader:
-            name = row.get("IFC Class", "").strip()
-            area_raw = row.get("Area", "").strip()
+            name = row.get("Space", "").strip()
+            area_raw = row.get("NetArea", "").strip()
             
             if not name or not area_raw:
                 continue
